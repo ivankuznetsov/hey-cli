@@ -70,6 +70,30 @@ func TestPostingActions(t *testing.T) {
 	}
 }
 
+func TestPostingActionMetadataIsSingular(t *testing.T) {
+	commands := []*postingActionCommand{
+		newPaperTrailCommand(),
+		newFeedCommand(),
+		newSetAsideCommand(),
+		newReplyLaterCommand(),
+		newTrashCommand(),
+		newIgnoreCommand(),
+	}
+
+	for _, command := range commands {
+		t.Run(command.cmd.Name(), func(t *testing.T) {
+			if strings.Contains(command.cmd.Short, "postings") {
+				t.Errorf("Short = %q, want singular posting description", command.cmd.Short)
+			}
+
+			agentNotes := command.cmd.Annotations["agent_notes"]
+			if strings.Contains(agentNotes, "posting IDs") || strings.Contains(agentNotes, "each posting") {
+				t.Errorf("agent_notes = %q, want singular posting instructions", agentNotes)
+			}
+		})
+	}
+}
+
 func TestPostingActionRejectsMultipleIDs(t *testing.T) {
 	var requests int
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

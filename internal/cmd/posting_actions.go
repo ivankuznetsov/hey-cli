@@ -62,9 +62,9 @@ func (c *postingActionCommand) run(cmd *cobra.Command, args []string) error {
 func newPaperTrailCommand() *postingActionCommand {
 	return newPostingActionCommand(
 		"paper-trail",
-		"Move postings to Paper Trail",
+		"Move a posting to Paper Trail",
 		"moved to Paper Trail",
-		"State-changing action. Confirm the exact posting IDs and obtain explicit user approval before moving each posting to Paper Trail.",
+		"State-changing action. Confirm the exact posting ID and obtain explicit user approval before moving the posting to Paper Trail.",
 		func(ctx context.Context, id int64) error {
 			return sdk.Postings().MoveToPaperTrail(ctx, id)
 		},
@@ -76,9 +76,9 @@ func newPaperTrailCommand() *postingActionCommand {
 func newTrashCommand() *postingActionCommand {
 	return newPostingActionCommand(
 		"trash",
-		"Move postings to Trash",
+		"Move a posting to Trash",
 		"moved to Trash",
-		"State-changing action. Confirm the exact posting IDs and obtain explicit user approval before moving each posting to Trash.",
+		"State-changing action. Confirm the exact posting ID and obtain explicit user approval before moving the posting to Trash.",
 		func(ctx context.Context, id int64) error {
 			return sdk.Postings().MoveToTrash(ctx, id)
 		},
@@ -88,9 +88,9 @@ func newTrashCommand() *postingActionCommand {
 func newFeedCommand() *postingActionCommand {
 	return newPostingActionCommand(
 		"feed",
-		"Move postings to The Feed",
+		"Move a posting to The Feed",
 		"moved to The Feed",
-		"State-changing action. Confirm the exact posting IDs and obtain explicit user approval before moving each posting to The Feed.",
+		"State-changing action. Confirm the exact posting ID and obtain explicit user approval before moving the posting to The Feed.",
 		func(ctx context.Context, id int64) error {
 			return sdk.Postings().MoveToFeed(ctx, id)
 		},
@@ -100,9 +100,9 @@ func newFeedCommand() *postingActionCommand {
 func newSetAsideCommand() *postingActionCommand {
 	return newPostingActionCommand(
 		"set-aside",
-		"Move postings to Set Aside",
+		"Move a posting to Set Aside",
 		"moved to Set Aside",
-		"State-changing action. Confirm the exact posting IDs and obtain explicit user approval before moving each posting to Set Aside.",
+		"State-changing action. Confirm the exact posting ID and obtain explicit user approval before moving the posting to Set Aside.",
 		func(ctx context.Context, id int64) error {
 			return sdk.Postings().MoveToSetAside(ctx, id)
 		},
@@ -113,9 +113,9 @@ func newSetAsideCommand() *postingActionCommand {
 func newReplyLaterCommand() *postingActionCommand {
 	return newPostingActionCommand(
 		"reply-later",
-		"Move postings to Reply Later",
+		"Move a posting to Reply Later",
 		"moved to Reply Later",
-		"State-changing action. Confirm the exact posting IDs and obtain explicit user approval before moving each posting to Reply Later.",
+		"State-changing action. Confirm the exact posting ID and obtain explicit user approval before moving the posting to Reply Later.",
 		func(ctx context.Context, id int64) error {
 			return sdk.Postings().MoveToReplyLater(ctx, id)
 		},
@@ -126,9 +126,9 @@ func newReplyLaterCommand() *postingActionCommand {
 func newIgnoreCommand() *postingActionCommand {
 	return newPostingActionCommand(
 		"ignore",
-		"Ignore postings",
+		"Ignore a posting",
 		"ignored",
-		"State-changing action. Confirm the exact posting IDs and obtain explicit user approval before ignoring each posting.",
+		"State-changing action. Confirm the exact posting ID and obtain explicit user approval before ignoring the posting.",
 		func(ctx context.Context, id int64) error {
 			return sdk.Postings().Ignore(ctx, id)
 		},
