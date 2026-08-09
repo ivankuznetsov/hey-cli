@@ -111,6 +111,38 @@ func TestPostingActionRejectsMultipleIDs(t *testing.T) {
 	}
 }
 
+func TestPostingActionRejectsListOnlyFormatsBeforeRequest(t *testing.T) {
+	tests := []struct {
+		flag string
+		want string
+	}{
+		{flag: "--ids-only", want: "--ids-only requires list data"},
+		{flag: "--count", want: "--count requires list data"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.flag, func(t *testing.T) {
+			var requests int
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests++
+				w.WriteHeader(http.StatusNoContent)
+			}))
+			defer server.Close()
+
+			_, err := runPostingAction(t, server, "trash", "12345", tt.flag)
+			if err == nil {
+				t.Fatalf("expected %s usage error", tt.flag)
+			}
+			if !strings.Contains(err.Error(), tt.want) {
+				t.Errorf("error = %q, want %q", err, tt.want)
+			}
+			if requests != 0 {
+				t.Errorf("requests = %d, want 0", requests)
+			}
+		})
+	}
+}
+
 func TestTrash(t *testing.T) {
 	var path string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

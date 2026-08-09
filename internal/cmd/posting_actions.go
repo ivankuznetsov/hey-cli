@@ -45,6 +45,13 @@ func (c *postingActionCommand) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	switch writer.EffectiveFormat() {
+	case output.FormatIDs:
+		return output.ErrUsage("--ids-only requires list data")
+	case output.FormatCount:
+		return output.ErrUsage("--count requires list data")
+	}
+
 	if err := c.runSingle(cmd.Context(), ids[0]); err != nil {
 		return convertSDKError(err)
 	}
