@@ -24,10 +24,10 @@ func TestPostingActions(t *testing.T) {
 			postingID := createPostingForAction(t)
 			postingIDString := intStr(postingID)
 			t.Cleanup(func() {
-				hey(t, "trash", postingIDString, "--json")
+				hey(t, "trash", postingIDString, "--kind", "topic", "--json")
 			})
 
-			resp := heyJSON(t, action.command, postingIDString)
+			resp := heyJSON(t, action.command, postingIDString, "--kind", "topic")
 			wantSummary := fmt.Sprintf("Posting %d %s", postingID, action.pastTense)
 			if resp.Summary != wantSummary {
 				t.Errorf("summary = %q, want %q", resp.Summary, wantSummary)

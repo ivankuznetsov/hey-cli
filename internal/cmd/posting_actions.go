@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -12,6 +13,7 @@ import (
 type postingActionCommand struct {
 	cmd       *cobra.Command
 	pastTense string
+	kind      string
 	runSingle func(context.Context, int64) error
 }
 
@@ -24,22 +26,19 @@ func newPostingActionCommand(name, short, pastTense, agentNotes string, runSingl
 		Use:     name + " <posting-id>",
 		Aliases: aliases,
 		Short:   short,
-		Example: fmt.Sprintf("  hey %s 12345", name),
+		Example: fmt.Sprintf("  hey %s 12345 --kind topic", name),
 		Annotations: map[string]string{
-			"agent_notes": agentNotes,
+			"agent_notes": agentNotes + " Pass --kind exactly as returned by hey box --json. HEY World posts are rejected before any email action is requested.",
 		},
 		RunE: c.run,
 		Args: usageExactOneArg(),
 	}
+	c.cmd.Flags().StringVar(&c.kind, "kind", "", "Posting kind from hey box --json (required)")
 
 	return c
 }
 
 func (c *postingActionCommand) run(cmd *cobra.Command, args []string) error {
-	if err := requireAuth(); err != nil {
-		return err
-	}
-
 	ids, err := parseIntArgs(args)
 	if err != nil {
 		return err
@@ -50,6 +49,13 @@ func (c *postingActionCommand) run(cmd *cobra.Command, args []string) error {
 		return output.ErrUsage("--ids-only requires list data")
 	case output.FormatCount:
 		return output.ErrUsage("--count requires list data")
+	default:
+	}
+	if err := c.validateKind(); err != nil {
+		return err
+	}
+	if err := requireAuth(); err != nil {
+		return err
 	}
 
 	if err := c.runSingle(cmd.Context(), ids[0]); err != nil {
@@ -64,6 +70,30 @@ func (c *postingActionCommand) run(cmd *cobra.Command, args []string) error {
 	}
 
 	return writeOK(nil, output.WithSummary(summary))
+}
+
+func (c *postingActionCommand) validateKind() error {
+	kind := strings.TrimSpace(c.kind)
+	if kind == "" {
+		return output.ErrUsageHint(
+			"--kind is required for posting actions",
+			"Use the exact kind from `hey box <box> --json`, for example `--kind topic`.",
+		)
+	}
+	if !strings.EqualFold(kind, "world/post") {
+		return nil
+	}
+
+	if c.cmd.Name() == "trash" {
+		return output.ErrUsageHint(
+			"hey trash cannot move a HEY World post to Trash",
+			"HEY World posts are published content. Deleting one requires a separate action and explicit confirmation.",
+		)
+	}
+	return output.ErrUsageHint(
+		fmt.Sprintf("hey %s cannot act on a HEY World post; it only works with email postings", c.cmd.Name()),
+		"HEY World posts are published content and cannot be handled by email posting actions.",
+	)
 }
 
 func newPaperTrailCommand() *postingActionCommand {

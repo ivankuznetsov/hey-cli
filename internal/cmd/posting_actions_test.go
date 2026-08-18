@@ -59,7 +59,7 @@ func TestPostingActions(t *testing.T) {
 			}))
 			defer server.Close()
 
-			resp, err := runPostingAction(t, server, tt.command, "12345")
+			resp, err := runPostingAction(t, server, tt.command, "12345", "--kind", "topic")
 			if err != nil {
 				t.Fatalf("execute: %v", err)
 			}
@@ -129,7 +129,7 @@ func TestPostingActionRejectsListOnlyFormatsBeforeRequest(t *testing.T) {
 			}))
 			defer server.Close()
 
-			_, err := runPostingAction(t, server, "trash", "12345", tt.flag)
+			_, err := runPostingAction(t, server, "trash", "12345", "--kind", "topic", tt.flag)
 			if err == nil {
 				t.Fatalf("expected %s usage error", tt.flag)
 			}
@@ -155,7 +155,7 @@ func TestTrash(t *testing.T) {
 	}))
 	defer server.Close()
 
-	resp, err := runPostingAction(t, server, "trash", "12345")
+	resp, err := runPostingAction(t, server, "trash", "12345", "--kind", "topic")
 	if err != nil {
 		t.Fatalf("execute: %v", err)
 	}
@@ -173,7 +173,7 @@ func TestPostingActionReturnsSDKError(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := runPostingAction(t, server, "trash", "12345")
+	_, err := runPostingAction(t, server, "trash", "12345", "--kind", "topic")
 	if err == nil {
 		t.Fatal("expected SDK error")
 	}
@@ -192,5 +192,54 @@ func TestPostingActionRejectsInvalidID(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "invalid posting ID") {
 		t.Errorf("error = %q, want invalid posting ID", err)
+	}
+}
+
+func TestPostingActionRequiresKindBeforeRequest(t *testing.T) {
+	var requests int
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		requests++
+		w.WriteHeader(http.StatusNoContent)
+	}))
+	defer server.Close()
+
+	_, err := runPostingAction(t, server, "trash", "12345")
+	if err == nil {
+		t.Fatal("expected missing kind error")
+	}
+	if !strings.Contains(err.Error(), "--kind is required") {
+		t.Errorf("error = %q, want missing kind guidance", err)
+	}
+	if requests != 0 {
+		t.Errorf("requests = %d, want 0", requests)
+	}
+}
+
+func TestPostingActionsRejectWorldPostsBeforeRequest(t *testing.T) {
+	commands := []string{"paper-trail", "feed", "set-aside", "reply-later", "trash", "ignore"}
+
+	for _, command := range commands {
+		t.Run(command, func(t *testing.T) {
+			var requests int
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				requests++
+				w.WriteHeader(http.StatusNoContent)
+			}))
+			defer server.Close()
+
+			_, err := runPostingAction(t, server, command, "12345", "--kind", "world/post")
+			if err == nil {
+				t.Fatal("expected HEY World rejection")
+			}
+			if !strings.Contains(err.Error(), "HEY World") {
+				t.Errorf("error = %q, want HEY World guidance", err)
+			}
+			if command == "trash" && !strings.Contains(err.Error(), "cannot move a HEY World post to Trash") {
+				t.Errorf("trash error = %q, want clear Trash rejection", err)
+			}
+			if requests != 0 {
+				t.Errorf("requests = %d, want 0", requests)
+			}
+		})
 	}
 }

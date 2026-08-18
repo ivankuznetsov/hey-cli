@@ -85,6 +85,8 @@ CLI for HEY email: mailboxes, email threads, replies, compose, calendars, todos,
 3. **HTML output** is available via `--html` for commands that return HTML content
 4. **Confirm state-changing actions first** — obtain explicit user approval before
    running `trash`, `ignore`, or changing posting routing
+5. **Keep HEY World separate from email:** pass the posting's exact `kind` to
+   email posting actions. Never pass `world/post` to an email action
 
 ## Quick Reference
 
@@ -106,12 +108,12 @@ CLI for HEY email: mailboxes, email threads, replies, compose, calendars, todos,
 | Delete todo | `hey todo delete 123` |
 | Mark as seen | `hey seen 12345` |
 | Mark as unseen | `hey unseen 12345` |
-| Move to Trash | `hey trash 12345 --json` |
-| Move to Paper Trail | `hey paper-trail 12345 --json` |
-| Move to Feed | `hey feed 12345 --json` |
-| Set aside | `hey set-aside 12345 --json` |
-| Move to Reply Later | `hey reply-later 12345 --json` |
-| Ignore posting | `hey ignore 12345 --json` |
+| Move to Trash | `hey trash 12345 --kind topic --json` |
+| Move to Paper Trail | `hey paper-trail 12345 --kind topic --json` |
+| Move to Feed | `hey feed 12345 --kind topic --json` |
+| Set aside | `hey set-aside 12345 --kind topic --json` |
+| Move to Reply Later | `hey reply-later 12345 --kind topic --json` |
+| Ignore posting | `hey ignore 12345 --kind topic --json` |
 | Complete habit | `hey habit complete 123` |
 | Uncomplete habit | `hey habit uncomplete 123` |
 | Start time tracking | `hey timetrack start` |
@@ -136,7 +138,7 @@ Want to read email?
 ├── Read full thread? → hey threads <topic_id> --json
 ├── Mark as seen? → hey seen <posting-id>
 ├── Mark as unseen? → hey unseen <posting-id>
-├── Move or ignore? → confirm first, then use hey <paper-trail|feed|set-aside|reply-later|trash|ignore> <posting-id> --json
+├── Move or ignore email? → confirm first, then pass <posting-id> --kind <kind> to the action
 └── Launch interactive UI? → hey (no args, launches TUI)
 ```
 
@@ -176,7 +178,10 @@ hey box 123 --json                            # List emails in box (by ID)
 
 Box names: `imbox`, `feedbox`, `trailbox`, `asidebox`, `laterbox`, `bubblebox`
 
-**Response format:** `hey box` returns `{"box": {...}, "postings": [...]}`. Each posting has: `id` (posting ID), `topic_id` (topic ID), `name` (subject), `seen` (read status), `created_at`, `contacts`, `summary`, `app_url`. Use `topic_id` for `hey threads` and `hey reply`.
+**Response format:** `hey box` returns a box object with a `postings` array. Each
+posting includes `id`, `kind`, `topic_id`, `name`, `seen`, `created_at`,
+`contacts`, `summary`, and `app_url`. Use `topic_id` for `hey threads` and
+`hey reply`. A `kind` of `world/post` is published HEY World content, not email.
 
 ### Email - Threads
 
@@ -211,20 +216,23 @@ Takes posting IDs (the `id` field from `hey box` output).
 
 ### Email - Posting Actions
 
-These commands change mailbox state. Confirm the exact posting IDs and obtain
-explicit user approval before running them.
+These commands change mailbox state. Confirm the exact posting ID and obtain
+explicit user approval before running them. Pass the exact `kind` returned for
+that posting by `hey box --json`.
 
 ```bash
-hey paper-trail 12345 --json                 # Move to Paper Trail
-hey feed 12345 --json                        # Move to The Feed
-hey set-aside 12345 --json                   # Move to Set Aside
-hey reply-later 12345 --json                 # Move to Reply Later
-hey trash 12345 --json                       # Move to Trash
-hey ignore 12345 --json                      # Stop notifications
+hey paper-trail 12345 --kind topic --json    # Move to Paper Trail
+hey feed 12345 --kind topic --json           # Move to The Feed
+hey set-aside 12345 --kind topic --json      # Move to Set Aside
+hey reply-later 12345 --kind topic --json    # Move to Reply Later
+hey trash 12345 --kind topic --json          # Move to Trash
+hey ignore 12345 --kind topic --json         # Stop notifications
 ```
 
-Each command accepts exactly one posting ID. Use the `id` field from
-`hey box --json`, not `topic_id`.
+Each command accepts exactly one posting ID. Use the `id` and `kind` fields from
+`hey box --json`, not `topic_id`. These commands reject `world/post` before
+sending a request. A HEY World post is published content, so deleting one must
+be a separately named action with its own explicit confirmation.
 
 ### Drafts
 
